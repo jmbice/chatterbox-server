@@ -8,27 +8,18 @@ var defaultCorsHeaders = {
 var headers = defaultCorsHeaders;
 var data = {
   results: [
-    // {
-    //   username: 'bob',
-    //   text: 'hi frank',
-    //   roomname: 'the interwebs',
-    //   createdAt: '2018-07-02T18:32:45.273Z',
-    //   updatedAt: '2018-07-02T18:32:45.273Z'
-    // },
-    // {
-    //   username: 'frank',
-    //   text: 'hi bob',
-    //   roomname: 'the interwebs',
-    //   createdAt: '2018-06-02T18:32:45.273Z',
-    //   updatedAt: '2018-06-02T18:32:45.273Z'
-    // },
-    // {
-    //   username: 'joe',
-    //   text: 'hi joe',
-    //   roomname: 'the interwebs',
-    //   createdAt: '2018-05-02T18:32:45.273Z',
-    //   updatedAt: '2018-05-02T18:32:45.273Z'
-    // }
+    {
+      username: 'bob',
+      text: 'hi frank',
+    },
+    {
+      username: 'frank',
+      text: 'hi bob',
+    },
+    {
+      username: 'joe',
+      text: 'hi joe',
+    }
   ]
 };
 
@@ -40,36 +31,30 @@ var requestHandler = function(request, response) {
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
   
   if (request.method === "GET") {
+    if ('/classes/messages' === request.url || '/?order=-createdAt' === request.url) {
+      statusCode = 200;
+    } else {
+      statusCode = 404;
+    }
     headers['Content-Type'] = 'application/json';
-    statusCode = 200;
     response.writeHead(statusCode, headers);
     response.end(JSON.stringify(data));
 
-  } else if (request.method === "POST") {
-    headers['Content-Type'] = 'application/json';
-    statusCode = 201;
-    response.writeHead(statusCode, headers);
-    data.results.push(request._postData); 
-    console.log(request) 
-    response.end(JSON.stringify(data));
-    // let body = [];
-    // request.on('data', (chunk) => {
-    //   body.push(chunk);
-      
-    // }).on('end', () => {
-    //   body = Buffer.concat(body).toString();
-    //   console.log(body);
-    
-    //   data.results.push(JSON.parse(body));
-    //   console.log(JSON.parse(body));
-    //   response.end(data);
-      
-    // })
-        
-    
-    
-    
-
+  } else if (request.method === "POST" && (request.url === '/classes/messages' || '/?order=-createdAt' === request.url)) {
+    let body = '';
+    console.log("who cares about status code: ", request);
+    request.on('error', (err) => {
+      console.log(err.stack);
+    }).on('data', (chunk) => {
+      body += chunk; 
+    }).on('end', () => {
+      data.results.push(JSON.parse(body));
+      statusCode = 201;
+      headers['Content-Type'] = 'application/json';
+      response.writeHead(statusCode, headers);
+      console.log('is it too slow though');
+      response.end();
+    });
     
   } else if (request.method === "OPTIONS") {
     headers['Content-Type'] = 'application/json';
@@ -80,10 +65,6 @@ var requestHandler = function(request, response) {
     console.log ('Error: ' + request.method + ' is not recognized.');
   }
    
-   
-  // response.writeHead(statusCode, headers);
-  // response.end('Hello, Mr. Bae & Mr. Bice!');
-  
 };
 
 
