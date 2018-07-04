@@ -5,7 +5,6 @@ var defaultCorsHeaders = {
   'access-control-allow-headers': 'content-type, accept',
   'access-control-max-age': 10 // Seconds.
 };
-var headers = defaultCorsHeaders;
 var data = {
   results: [
     {
@@ -26,6 +25,7 @@ var data = {
 
 var requestHandler = function(request, response) {
   var statusCode;
+  var headers = defaultCorsHeaders;
 
 
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
@@ -40,24 +40,20 @@ var requestHandler = function(request, response) {
     response.writeHead(statusCode, headers);
     response.end(JSON.stringify(data));
 
-  } else if (request.method === "POST" && (request.url === '/classes/messages' || '/?order=-createdAt' === request.url)) {
+  } else if (request.method === "POST" ) {
     let body = '';
-    console.log("who cares about status code: ", request);
-    request.on('error', (err) => {
-      console.log(err.stack);
-    }).on('data', (chunk) => {
+    request.on('data', (chunk) => {
       body += chunk; 
     }).on('end', () => {
       data.results.push(JSON.parse(body));
       statusCode = 201;
       headers['Content-Type'] = 'application/json';
       response.writeHead(statusCode, headers);
-      console.log('is it too slow though');
-      response.end();
+      response.end(JSON.stringify(data));
     });
     
   } else if (request.method === "OPTIONS") {
-    headers['Content-Type'] = 'application/json';
+    statusCode = 200;
     response.writeHead(statusCode, headers);
     response.end();
     
